@@ -1,21 +1,23 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import supabase from '../supabase'
 
 function Signup() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState(null)
+    const [message, setMessage] = useState(null)
 
     async function handleSignup(e) {
         e.preventDefault()
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
             email: email,
             password: password,
         })
         if (error) {
             setError(error.message)
         } else {
-            alert('Check your email to confirm your account!')
+            setMessage('Check your email to confirm your account!')
         }
     }
 
@@ -38,6 +40,8 @@ function Signup() {
                 <button type='submit'>Sign Up</button>
             </form>
             {error && <p>{error}</p>}
+            {message && <p>{message}</p>}
+            <p>Already have an account? <Link to="/">Log in</Link></p>
         </div>
     )
 }

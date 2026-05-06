@@ -1,21 +1,23 @@
 import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import supabase from '../supabase'
 
 function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState(null)
+    const navigate = useNavigate()
 
     async function handleLogin(e) {
         e.preventDefault()
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password,
         })
         if (error) {
             setError(error.message)
         } else {
-            alert('Login Successful!')
+            navigate('/dashboard')
         }
     }
 
@@ -38,6 +40,7 @@ function Login() {
                 <button type='submit'>Login</button>
             </form>
             {error && <p>{error}</p>}
+            <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
         </div>
     )
 }
