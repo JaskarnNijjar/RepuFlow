@@ -29,8 +29,8 @@ function BusinessSetup() {
 
     function handleSelect(suggestion) {
         setSelected({
-            name:suggestion.description,
-            placeId: suggestion.place_id
+            name: suggestion.placePrediction.text.text,
+            placeId: suggestion.placePrediction.placeId
         })
         setSearchInput(suggestion.description)
         setSuggestions([])
@@ -47,12 +47,12 @@ function BusinessSetup() {
             />
             {suggestions.length > 0 && (
                 <ul>
-                    {suggestions.map((suggestions) => (
+                    {suggestions.map((suggestion, index) => (
                         <li
-                        key={suggestion.place_id}
+                        key={suggestion.placePrediction.placeId}
                         onClick={() => handleSelect(suggestion)}
                         >
-                            {suggestion.description}
+                            {suggestion.placePrediction.text.text}
                         </li>
                     ))}
                 </ul>
