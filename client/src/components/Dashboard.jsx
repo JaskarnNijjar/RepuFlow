@@ -1,4 +1,5 @@
 import supabase from '../supabase'
+import BusinessSetup from './BusinessSetup'
 
 function Dashboard() {
   async function handleLogout() {
@@ -9,6 +10,7 @@ function Dashboard() {
     <div>
       <h1>Dashboard</h1>
       <button onClick={handleLogout}>Logout</button>
+      <BusinessSetup />
     </div>
   )
 }
