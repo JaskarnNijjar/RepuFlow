@@ -11,6 +11,7 @@ function Dashboard() {
   const [reviews, setReviews] = useState([]);
   const [rLoading, setRLoading] = useState(false);
   const [err, setErr] = useState(null);
+  const [summary, setSummary] = useState(null);
 
   useEffect(() => {
     async function fetchBusiness() {
@@ -33,7 +34,7 @@ function Dashboard() {
 
   useEffect(() => {
     async function fetchReviews() {
-      console.log('fetchReviews called, business:', business)
+      console.log("fetchReviews called, business:", business);
       if (!business) return;
       setRLoading(true);
       try {
@@ -41,8 +42,10 @@ function Dashboard() {
           `http://localhost:8080/api/places/details?placeId=${business.place_id}`,
         );
         const data = await response.json();
-        console.log('reviews data:', data)
+        console.log("reviews data:", data);
+        console.log('summary:', data.summary)
         setReviews(data.reviews || []);
+        setSummary(data.summary || null);
       } catch (err) {
         setErr("Failed to fetch reviews");
       } finally {
@@ -76,6 +79,14 @@ function Dashboard() {
 
       {rLoading && <p>Loading reviews...</p>}
       {err && <p>{err}</p>}
+
+      {summary && (
+        <div>
+          <h3>AI Summary</h3>
+          <p>{summary}</p>
+        </div>
+      )}
+
       {reviews.map((review, index) => (
         <div key={index}>
           <p>{review.authorAttribution.displayName}</p>
