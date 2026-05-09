@@ -42,6 +42,7 @@ This project is actively in development. Here's what's working:
 - Business search — Google Places autocomplete lets users find and select their business by name
 - Review fetching — Google Places details route returns reviews, rating, address, and phone number for any selected business
 - Secure API proxy — all Google API calls go through the Express backend so API keys are never exposed to the browser
+- Review reputation summary — VADER sentiment scores and keyword pattern detection across all reviews are combined to generate a structured multi-sentence summary covering overall standing, top praised aspects, recurring complaints, and specific patterns flagged across multiple reviews
 
 **In progress:**
 - Saving selected business to the database
@@ -51,6 +52,7 @@ This project is actively in development. Here's what's working:
 - Negative review alerts
 
 **Known limitations:**
+- The review reputation summary is generated from VADER sentiment scores and keyword frequency analysis rather than a language model. It identifies patterns across reviews but does not infer meaning from text the way an LLM would. For a production version of RepuFlow, this would be replaced with a paid LLM API call using a curated analytical prompt.
 - Google's Places API returns a maximum of 5 reviews per business. This is a hard limit set by Google and applies to all applications using their official API. For a production version of RepuFlow, a third party service like Outscraper would be used to fetch the full review history. For the purposes of this demo, 5 reviews are sufficient to demonstrate the sentiment analysis and dashboard functionality.
 
 ---
