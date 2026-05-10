@@ -44,6 +44,7 @@ function Dashboard() {
         const data = await response.json();
         console.log("reviews data:", data);
         console.log('summary:', data.summary)
+        console.log('sentiment score:', data.sentimentScore)
         setReviews(data.reviews || []);
         setSummary(data.summary || null);
       } catch (err) {
