@@ -63,6 +63,14 @@ function Dashboard() {
     await supabase.auth.signOut();
   }
 
+  async function handleChangeBusiness() {
+    await supabase.from("businesses").delete().eq("id", business.id);
+    setBusiness(null);
+    setReviews([]);
+    setSummary(null);
+    setSentimentScore(null);
+  }
+
   if (loading) return <p>Loading...</p>;
 
   if (!business) {
@@ -78,6 +86,7 @@ function Dashboard() {
     <div>
       <h1>Dashboard</h1>
       <button onClick={handleLogout}>Logout</button>
+      <button onClick={handleChangeBusiness}>Change Business</button>
       <p>Business: {business.business_name}</p>
 
       {sentimentScore !== null && (
