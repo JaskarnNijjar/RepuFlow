@@ -28,7 +28,8 @@ RepuFlow is built for the one-person trades operation that just wants to know wh
 - **Database + Auth** — Supabase (PostgreSQL)
 - **SMS** — Twilio (planned)
 - **Review Data** — Google Places API (New)
-- **Sentiment Analysis** — VADER (planned)
+- **Sentiment Analysis** — VADER
+- **AI Summaries** — Groq API (Llama 3.1 8B)
 
 ---
 
@@ -42,7 +43,8 @@ This project is actively in development. Here's what's working:
 - Business search — Google Places autocomplete lets users find and select their business by name
 - Review fetching — Google Places details route returns reviews, rating, address, and phone number for any selected business
 - Secure API proxy — all Google API calls go through the Express backend so API keys are never exposed to the browser
-- Review reputation summary — VADER sentiment scores and keyword pattern detection across all reviews are combined to generate a structured multi-sentence summary covering overall standing, top praised aspects, recurring complaints, and specific patterns flagged across multiple reviews
+- Sentiment scoring — every review is scored by VADER and classified as positive, neutral, or negative based on its compound score
+- AI review summary — all review texts are sent to the Groq API (Llama 3.1 8B Instant) with an analyst prompt, which returns a plain-prose paragraph covering what customers consistently praise, recurring complaints, and an overall sentiment verdict
 
 **In progress:**
 - Saving selected business to the database
@@ -52,14 +54,15 @@ This project is actively in development. Here's what's working:
 - Negative review alerts
 
 **Known limitations:**
-- The review reputation summary is generated from VADER sentiment scores and keyword frequency analysis rather than a language model. It identifies patterns across reviews but does not infer meaning from text the way an LLM would. For a production version of RepuFlow, this would be replaced with a paid LLM API call using a curated analytical prompt.
-- Google's Places API returns a maximum of 5 reviews per business. This is a hard limit set by Google and applies to all applications using their official API. For a production version of RepuFlow, a third party service like Outscraper would be used to fetch the full review history. For the purposes of this demo, 5 reviews are sufficient to demonstrate the sentiment analysis and dashboard functionality.
+- Google's Places API returns a maximum of 5 reviews per business. This is a hard limit set by Google and applies to all applications using their official API. For a production version of RepuFlow, a third-party service like Outscraper would be used to fetch the full review history. For the purposes of this demo, 5 reviews are sufficient to demonstrate the sentiment analysis and AI summary functionality.
+- The AI summary is generated from only the reviews returned by the Google Places API (max 5). A production version would feed a much larger review corpus to the model for a more representative analysis.
+- Groq's free tier has rate limits. For a production deployment, this would be handled with a queuing strategy or a paid tier.
 
 ---
 
 ## Running Locally
 
-**Prerequisites:** Node.js, a Supabase account, a Google Cloud account with Places API enabled
+**Prerequisites:** Node.js, a Supabase account, a Google Cloud account with Places API enabled, a Groq account (free at console.groq.com)
 
 **Clone the repo:**
 ```bash
@@ -78,6 +81,7 @@ Create a `.env` file in the `server` folder:
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 GOOGLE_PLACES_KEY=your_google_places_api_key
+GROQ_API_KEY=your_groq_api_key
 PORT=8080
 
 **Set up the client:**
