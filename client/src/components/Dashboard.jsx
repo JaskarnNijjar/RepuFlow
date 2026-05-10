@@ -12,6 +12,7 @@ function Dashboard() {
   const [rLoading, setRLoading] = useState(false);
   const [err, setErr] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [sentimentScore, setSentimentScore] = useState(null);
 
   useEffect(() => {
     async function fetchBusiness() {
@@ -47,6 +48,7 @@ function Dashboard() {
         console.log('sentiment score:', data.sentimentScore)
         setReviews(data.reviews || []);
         setSummary(data.summary || null);
+        setSentimentScore(data.sentimentScore ?? null);
       } catch (err) {
         setErr("Failed to fetch reviews");
       } finally {
@@ -77,6 +79,30 @@ function Dashboard() {
       <h1>Dashboard</h1>
       <button onClick={handleLogout}>Logout</button>
       <p>Business: {business.business_name}</p>
+
+      {sentimentScore !== null && (
+        <div style={{ margin: '16px 0' }}>
+          <p style={{ margin: '0 0 6px', fontWeight: 'bold' }}>Overall Sentiment</p>
+          <div style={{ position: 'relative', height: '16px', borderRadius: '8px', background: 'linear-gradient(to right, #ef4444, #eab308, #22c55e)' }}>
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: `${((sentimentScore + 1) / 2) * 100}%`,
+              transform: 'translate(-50%, -50%)',
+              width: '14px',
+              height: '14px',
+              borderRadius: '50%',
+              background: '#fff',
+              border: '2px solid #333',
+              boxSizing: 'border-box',
+            }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '12px', color: '#666' }}>
+            <span>Negative</span>
+            <span>Positive</span>
+          </div>
+        </div>
+      )}
 
       {rLoading && <p>Loading reviews...</p>}
       {err && <p>{err}</p>}
