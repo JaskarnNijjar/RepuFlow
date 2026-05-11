@@ -14,6 +14,11 @@ function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [sentimentScore, setSentimentScore] = useState(null);
 
+  const [customers, setCustomers] = useState([]);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [cSaving, setCSaving] = useState(false);
+
   useEffect(() => {
     async function fetchBusiness() {
       try {
@@ -58,6 +63,35 @@ function Dashboard() {
 
     fetchReviews();
   }, [business]);
+
+  useEffect(() => {
+    if (!business) return;
+    async function fetchCustomers() {
+      const { data } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("business_id", business.id);
+      if (data) setCustomers(data);
+    }
+    fetchCustomers();
+  }, [business]);
+
+  async function handleAddCustomer(e) {
+    e.preventDefault();
+    if (!customerName.trim() || !customerPhone.trim()) return;
+    setCSaving(true);
+    const { data, error } = await supabase
+      .from("customers")
+      .insert({ business_id: business.id, customer_name: customerName, customer_phone: customerPhone })
+      .select()
+      .single();
+    if (!error && data) {
+      setCustomers((prev) => [...prev, data]);
+      setCustomerName("");
+      setCustomerPhone("");
+    }
+    setCSaving(false);
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -130,6 +164,32 @@ function Dashboard() {
           <p>{review.text.text}</p>
         </div>
       ))}
+
+      <div style={{ marginTop: '24px' }}>
+        <h3>Customers</h3>
+        <form onSubmit={handleAddCustomer}>
+          <input
+            type="text"
+            placeholder="Customer name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Phone number"
+            value={customerPhone}
+            onChange={(e) => setCustomerPhone(e.target.value)}
+          />
+          <button type="submit" disabled={cSaving}>
+            {cSaving ? "Saving..." : "Add Customer"}
+          </button>
+        </form>
+        <ul>
+          {customers.map((c) => (
+            <li key={c.id}>{c.customer_name} — {c.customer_phone}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
