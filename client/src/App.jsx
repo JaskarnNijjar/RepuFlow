@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import PublicSearch from './components/PublicSearch'
 import PublicBusinessProfile from './components/PublicBusinessProfile'
 import LandingPage from './components/LandingPage'
+import CustomerManager from './components/CustomerManager'
 
 function App() {
   const { session, loading } = useAuth()
@@ -23,6 +24,11 @@ function App() {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/customers" element={
+        <ProtectedRoute>
+          <CustomerManager />
         </ProtectedRoute>
       } />
     </Routes>

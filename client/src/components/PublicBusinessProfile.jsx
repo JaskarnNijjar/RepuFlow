@@ -40,10 +40,25 @@ function PublicBusinessProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [hasBusiness, setHasBusiness] = useState(false);
+
   const [showModal, setShowModal] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [claimError, setClaimError] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    async function checkBusiness() {
+      const { data } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      if (data) setHasBusiness(true);
+    }
+    checkBusiness();
+  }, [user]);
 
   useEffect(() => {
     async function fetchDetails() {
@@ -114,12 +129,24 @@ function PublicBusinessProfile() {
           <button onClick={() => navigate('/')} className="text-lg font-bold text-white focus:outline-none">
             REPUFLOW
           </button>
-          <button
-            onClick={() => navigate('/login')}
-            className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
-          >
-            Login
-          </button>
+          <div className="flex items-center gap-4">
+            {user && hasBusiness && (
+              <button
+                onClick={() => navigate('/customers')}
+                className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
+              >
+                Review Requests
+              </button>
+            )}
+            {!user && (
+              <button
+                onClick={() => navigate('/login')}
+                className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
+              >
+                Login
+              </button>
+            )}
+          </div>
         </div>
       </nav>
 
