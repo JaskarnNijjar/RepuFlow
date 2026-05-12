@@ -58,9 +58,9 @@ router.get("/details", async (req, res) => {
         const compound = scores.compound;
 
         let sentiment;
-        if (compound >= 0.05) sentiment = "positive";
-        else if (compound <= -0.05) sentiment = "negative";
-        else sentiment = "neutral";
+        if (review.rating >= 4) sentiment = "positive";
+        else if (review.rating === 3) sentiment = "neutral";
+        else sentiment = "negative";
 
         return { ...review, sentiment, compound };
       });

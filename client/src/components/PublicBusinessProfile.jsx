@@ -2,6 +2,30 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import supabase from "../supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+function StarRating({ rating }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} className={`text-sm ${i <= Math.round(rating) ? "text-yellow-400" : "text-slate-700"}`}>
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function SentimentBadge({ sentiment }) {
+  if (sentiment === "positive")
+    return <Badge variant="outline" className="bg-green-900 text-green-400 border border-green-800">Positive</Badge>;
+  if (sentiment === "negative")
+    return <Badge variant="outline" className="bg-red-900 text-red-400 border border-red-800">Negative</Badge>;
+  return <Badge variant="outline" className="bg-yellow-900 text-yellow-400 border border-yellow-800">Neutral</Badge>;
+}
 
 function PublicBusinessProfile() {
   const { placeId } = useParams();
@@ -64,84 +88,172 @@ function PublicBusinessProfile() {
     navigate('/dashboard');
   }
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>{error}</p>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+        <p className="text-slate-400 text-sm animate-pulse">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+        <p className="text-red-400 text-sm">{error}</p>
+      </div>
+    );
+  }
+
+  const markerPosition = sentimentScore !== null ? ((sentimentScore + 1) / 2) * 100 : 50;
 
   return (
-    <div>
-      <h1>{placeDetails.displayName.text}</h1>
-      <p>{placeDetails.formattedAddress}</p>
-      <p>{placeDetails.rating} stars</p>
+    <div className="min-h-screen bg-[#0f172a]">
 
-      <button onClick={handleClaimClick}>Claim this Business</button>
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-[#0f172a] border-b border-slate-800">
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <button onClick={() => navigate('/')} className="text-lg font-bold text-white focus:outline-none">
+            REPUFLOW
+          </button>
+          <button
+            onClick={() => navigate('/login')}
+            className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
+          >
+            Login
+          </button>
+        </div>
+      </nav>
 
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '8px', maxWidth: '480px', width: '90%' }}>
-            <h2>Claim this Business</h2>
-            <p style={{ fontSize: '13px', color: '#444', lineHeight: '1.5' }}>
-              IMPORTANT DISCLAIMER: RepuFlow is a portfolio project built for educational and demonstration purposes only.
-              By claiming this business, you certify that: (1) You are the authorized owner or representative of this business,
-              (2) You will not use this platform to send unsolicited messages or spam,
-              (3) You will not use this platform to manipulate or fabricate reviews,
-              (4) You understand this is a demo application and should not be used for real commercial purposes without proper authorization.
-              Misuse of this platform is strictly prohibited.
-            </p>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '12px 0' }}>
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-              I have read and agree to the above terms
-            </label>
-            {claimError && <p style={{ color: 'red', fontSize: '13px' }}>{claimError}</p>}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-              <button onClick={handleConfirmClaim} disabled={!agreed || saving}>
-                {saving ? 'Saving...' : 'Confirm Claim'}
-              </button>
-              <button onClick={() => { setShowModal(false); setAgreed(false); setClaimError(null); }}>
-                Cancel
-              </button>
+      <div className="max-w-5xl mx-auto px-6 pt-20 pb-16 flex flex-col gap-4">
+
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-slate-100 mb-1">
+            {placeDetails.displayName.text}
+          </h1>
+          <div className="flex flex-wrap items-center gap-3 text-slate-400 text-sm">
+            <span>{placeDetails.formattedAddress}</span>
+            <span className="text-slate-600">·</span>
+            <div className="flex items-center gap-1.5">
+              <StarRating rating={placeDetails.rating} />
+              <span className="text-slate-300 font-medium">{placeDetails.rating}</span>
             </div>
           </div>
         </div>
-      )}
 
-      {sentimentScore !== null && (
-        <div style={{ margin: '16px 0' }}>
-          <p style={{ margin: '0 0 6px', fontWeight: 'bold' }}>Overall Sentiment</p>
-          <div style={{ position: 'relative', height: '16px', borderRadius: '8px', background: 'linear-gradient(to right, #ef4444, #eab308, #22c55e)' }}>
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: `${((sentimentScore + 1) / 2) * 100}%`,
-              transform: 'translate(-50%, -50%)',
-              width: '14px',
-              height: '14px',
-              borderRadius: '50%',
-              background: '#fff',
-              border: '2px solid #333',
-              boxSizing: 'border-box',
-            }} />
+        {sentimentScore !== null && (
+          <Card className="bg-slate-800 border border-slate-700 rounded-md">
+            <CardHeader className="px-4 pt-4 pb-2">
+              <CardTitle className="text-slate-200 text-base font-semibold">Overall sentiment</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="relative h-2 rounded-full overflow-visible bg-linear-to-r from-red-500 via-yellow-500 to-green-500">
+                <div
+                  className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-slate-900 shadow"
+                  style={{ left: `${markerPosition}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-2 text-sm text-slate-400">
+                <span>Negative</span>
+                <span>Positive</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {summary && (
+          <Card className="bg-slate-800 border border-slate-700 rounded-md">
+            <CardHeader className="px-4 pt-4 pb-2">
+              <CardTitle className="text-slate-200 text-base font-semibold">AI summary</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <p className="text-slate-300 text-sm leading-relaxed">{summary}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {reviews.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-slate-200 mb-3">Reviews</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {reviews.map((review, index) => (
+                <Card key={index} className="bg-slate-800 border border-slate-700 rounded-md hover:bg-slate-700 transition-colors duration-150">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div>
+                        <p className="text-slate-200 text-sm font-medium mb-1">
+                          {review.authorAttribution.displayName}
+                        </p>
+                        <StarRating rating={review.rating} />
+                      </div>
+                      {review.sentiment && <SentimentBadge sentiment={review.sentiment} />}
+                    </div>
+                    <Separator className="bg-slate-700 mb-3" />
+                    <p className="text-slate-400 text-sm leading-relaxed line-clamp-4">
+                      {review.text.text}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '12px', color: '#666' }}>
-            <span>Negative</span>
-            <span>Positive</span>
-          </div>
+        )}
+
+        <div className="pt-2">
+          <Button
+            onClick={handleClaimClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+          >
+            Claim this Business
+          </Button>
+        </div>
+
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <Card className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-md">
+            <CardHeader className="px-4 pt-4 pb-2">
+              <CardTitle className="text-slate-100 text-lg font-semibold">Claim this business</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 flex flex-col gap-4">
+              <p className="text-slate-400 text-sm leading-relaxed">
+                IMPORTANT DISCLAIMER: RepuFlow is a portfolio project built for educational and demonstration purposes only.
+                By claiming this business, you certify that: (1) You are the authorized owner or representative of this business,
+                (2) You will not use this platform to send unsolicited messages or spam,
+                (3) You will not use this platform to manipulate or fabricate reviews,
+                (4) You understand this is a demo application and should not be used for real commercial purposes without proper authorization.
+                Misuse of this platform is strictly prohibited.
+              </p>
+              <Separator className="bg-slate-700" />
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="w-4 h-4 rounded accent-blue-500"
+                />
+                <span className="text-slate-300 text-sm">I have read and agree to the above terms</span>
+              </label>
+              {claimError && <p className="text-red-400 text-sm">{claimError}</p>}
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleConfirmClaim}
+                  disabled={!agreed || saving}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-40"
+                >
+                  {saving ? "Saving..." : "Confirm claim"}
+                </Button>
+                <button
+                  onClick={() => { setShowModal(false); setAgreed(false); setClaimError(null); }}
+                  className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3"
+                >
+                  Cancel
+                </button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {summary && (
-        <div>
-          <h3>AI Summary</h3>
-          <p>{summary}</p>
-        </div>
-      )}
-
-      {reviews.map((review, index) => (
-        <div key={index}>
-          <p>{review.authorAttribution.displayName}</p>
-          <p>{review.rating} stars</p>
-          <p>{review.text.text}</p>
-        </div>
-      ))}
     </div>
   );
 }

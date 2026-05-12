@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicSearch from './components/PublicSearch'
 import PublicBusinessProfile from './components/PublicBusinessProfile'
+import LandingPage from './components/LandingPage'
 
 function App() {
   const { session, loading } = useAuth()
@@ -14,7 +15,8 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<PublicSearch />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/search" element={<PublicSearch />} />
       <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/signup" element={session ? <Navigate to="/dashboard" replace /> : <Signup />} />
       <Route path="/business/:placeId" element={<PublicBusinessProfile />} />

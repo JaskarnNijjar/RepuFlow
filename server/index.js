@@ -13,5 +13,8 @@ app.get('/', (req, res) => {
 const placesRouter = require('./routes/places')
 app.use('/api/places', placesRouter)
 
+const smsRoutes = require('./routes/sms')
+app.use('/api/sms', smsRoutes)
+
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
