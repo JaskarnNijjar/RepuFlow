@@ -65,7 +65,8 @@ router.get("/details", async (req, res) => {
         return { ...review, sentiment, compound };
       });
 
-      const sentimentScore = scoredReviews.reduce((sum, r) => sum + r.compound, 0) / scoredReviews.length;
+      const averageStarRating = scoredReviews.reduce((sum, r) => sum + r.rating, 0) / scoredReviews.length;
+      const sentimentScore = (averageStarRating - 3) / 2;
 
       let summary = summaryCache.get(placeId) || null
       if (!summary) {
