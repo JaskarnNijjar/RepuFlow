@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { Button } from '@/components/ui/button'
+import supabase from '../supabase'
 
 const EyeIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -24,6 +26,11 @@ const ChartIcon = () => (
 
 export default function LandingPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+  }
 
   return (
     <div style={{ backgroundColor: '#080c14', color: '#f0f4ff', fontFamily: 'inherit' }} className="min-h-screen">
@@ -34,19 +41,36 @@ export default function LandingPage() {
         style={{ backgroundColor: '#080c14', borderBottom: '1px solid #1e2d45' }}
       >
         <span className="text-white font-bold text-lg tracking-tight">RepuFlow</span>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <button
             onClick={() => navigate('/search')}
-            className="text-slate-400 hover:text-white text-sm transition-colors"
+            className="text-slate-400 hover:text-white text-sm transition-colors px-3 py-2"
           >
             Search Businesses
           </button>
-          <button
-            onClick={() => navigate('/login')}
-            className="text-slate-300 hover:text-white text-sm px-4 py-1.5 rounded-md border border-slate-700 hover:border-blue-500 transition-all"
-          >
-            Login
-          </button>
+          {user ? (
+            <>
+              <button
+                onClick={() => navigate('/businesses')}
+                className="text-slate-400 hover:text-white text-sm transition-colors px-3 py-2"
+              >
+                My Businesses
+              </button>
+              <button
+                onClick={handleLogout}
+                className="text-slate-400 hover:text-white text-sm transition-colors px-3 py-2"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="text-slate-300 hover:text-white text-sm px-4 py-2 rounded-md border border-slate-700 hover:border-blue-500 transition-all"
+            >
+              Login
+            </button>
+          )}
         </div>
       </nav>
 

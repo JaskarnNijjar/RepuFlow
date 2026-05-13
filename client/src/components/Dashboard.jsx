@@ -30,7 +30,8 @@ function SentimentBadge({ sentiment }) {
 function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [business, setBusiness] = useState(null);
+  const [businesses, setBusinesses] = useState([]);
+  const [activeBusiness, setActiveBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [reviews, setReviews] = useState([]);
@@ -38,18 +39,27 @@ function Dashboard() {
   const [err, setErr] = useState(null);
   const [summary, setSummary] = useState(null);
   const [sentimentScore, setSentimentScore] = useState(null);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   useEffect(() => {
     async function fetchBusiness() {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("businesses")
           .select("*")
           .eq("user_id", user.id)
-          .single();
+          .order("created_at", { ascending: false });
 
-        if (data) setBusiness(data);
-      } catch (err) {
+        if (data && data.length > 0) {
+          setBusinesses(data);
+          const savedId = localStorage.getItem("activeBusinessId");
+          const match = savedId ? data.find((b) => b.id === savedId) : null;
+          setActiveBusiness(match || data[0]);
+        } else {
+          setBusinesses([]);
+          setActiveBusiness(null);
+        }
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -60,21 +70,18 @@ function Dashboard() {
 
   useEffect(() => {
     async function fetchReviews() {
-      console.log("fetchReviews called, business:", business);
-      if (!business) return;
+      if (!activeBusiness) return;
       setRLoading(true);
+      setErr(null);
       try {
         const response = await fetch(
-          `http://localhost:8080/api/places/details?placeId=${business.place_id}`,
+          `http://localhost:8080/api/places/details?placeId=${activeBusiness.place_id}`,
         );
         const data = await response.json();
-        console.log("reviews data:", data);
-        console.log('summary:', data.summary)
-        console.log('sentiment score:', data.sentimentScore)
         setReviews(data.reviews || []);
         setSummary(data.summary || null);
         setSentimentScore(data.sentimentScore ?? null);
-      } catch (err) {
+      } catch {
         setErr("Failed to fetch reviews");
       } finally {
         setRLoading(false);
@@ -82,18 +89,21 @@ function Dashboard() {
     }
 
     fetchReviews();
-  }, [business]);
+  }, [activeBusiness]);
+
+  function handleBusinessSwitch(businessId) {
+    const selected = businesses.find((b) => b.id === businessId);
+    if (selected && selected.id !== activeBusiness?.id) {
+      localStorage.setItem("activeBusinessId", businessId);
+      setReviews([]);
+      setSummary(null);
+      setSentimentScore(null);
+      setActiveBusiness(selected);
+    }
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
-  }
-
-  async function handleChangeBusiness() {
-    await supabase.from("businesses").delete().eq("id", business.id);
-    setBusiness(null);
-    setReviews([]);
-    setSummary(null);
-    setSentimentScore(null);
   }
 
   if (loading) {
@@ -104,8 +114,15 @@ function Dashboard() {
     );
   }
 
-  if (!business) {
-    return <BusinessSetup onBusinessSaved={setBusiness} />;
+  if (businesses.length === 0) {
+    return (
+      <BusinessSetup
+        onBusinessSaved={(saved) => {
+          setBusinesses([saved]);
+          setActiveBusiness(saved);
+        }}
+      />
+    );
   }
 
   const markerPosition = ((sentimentScore + 1) / 2) * 100;
@@ -118,22 +135,22 @@ function Dashboard() {
           <button onClick={() => navigate("/")} className="text-lg font-bold text-white focus:outline-none">
             REPUFLOW
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <button
-              onClick={() => navigate("/customers")}
-              className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
+              onClick={() => navigate("/search")}
+              className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3 py-2"
             >
-              Review Requests
+              Search Businesses
             </button>
             <button
-              onClick={handleChangeBusiness}
-              className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
+              onClick={() => navigate("/businesses")}
+              className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3 py-2"
             >
-              Change business
+              My Businesses
             </button>
             <button
               onClick={handleLogout}
-              className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
+              className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3 py-2"
             >
               Logout
             </button>
@@ -144,9 +161,50 @@ function Dashboard() {
       <div className="max-w-5xl mx-auto px-6 pt-20 pb-16 flex flex-col gap-4">
 
         <div className="mb-2">
-          <h1 className="text-2xl font-bold text-slate-100 mb-1">{business.business_name}</h1>
+          <h1 className="text-2xl font-bold text-slate-100 mb-1">{activeBusiness.business_name}</h1>
           <p className="text-sm text-slate-400">Your reputation dashboard</p>
         </div>
+
+        {businesses.length > 1 && (
+          <div className="relative w-fit">
+            {switcherOpen && (
+              <div className="fixed inset-0 z-10" onClick={() => setSwitcherOpen(false)} />
+            )}
+            <button
+              onClick={() => setSwitcherOpen((o) => !o)}
+              className="relative z-20 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 text-slate-100 text-sm rounded-lg px-4 py-2 transition-colors"
+            >
+              <span>{activeBusiness.business_name}</span>
+              <svg
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                className={`text-slate-400 transition-transform ${switcherOpen ? "rotate-180" : ""}`}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {switcherOpen && (
+              <div className="absolute z-20 top-full mt-1 left-0 min-w-full bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
+                {businesses.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => { handleBusinessSwitch(b.id); setSwitcherOpen(false); }}
+                    className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-slate-700 ${
+                      b.id === activeBusiness.id ? "text-blue-400" : "text-slate-300"
+                    }`}
+                  >
+                    {b.id === activeBusiness.id && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                    <span className={b.id !== activeBusiness.id ? "pl-5" : ""}>{b.business_name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {sentimentScore !== null && (
           <Card className="bg-slate-800 border border-slate-700 rounded-md">
@@ -208,7 +266,6 @@ function Dashboard() {
             </div>
           </div>
         )}
-
 
       </div>
     </div>

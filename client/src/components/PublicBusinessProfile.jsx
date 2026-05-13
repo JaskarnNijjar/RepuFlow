@@ -40,25 +40,26 @@ function PublicBusinessProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [hasBusiness, setHasBusiness] = useState(false);
+  const [alreadyClaimed, setAlreadyClaimed] = useState(false);
 
-  const [showModal, setShowModal] = useState(false);
+  const [showClaimModal, setShowClaimModal] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [claimError, setClaimError] = useState(null);
 
   useEffect(() => {
     if (!user) return;
-    async function checkBusiness() {
+    async function checkClaimed() {
       const { data } = await supabase
         .from("businesses")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-      if (data) setHasBusiness(true);
+        .select("place_id")
+        .eq("user_id", user.id);
+      if (data && data.some((b) => b.place_id === placeId)) {
+        setAlreadyClaimed(true);
+      }
     }
-    checkBusiness();
-  }, [user]);
+    checkClaimed();
+  }, [user, placeId]);
 
   useEffect(() => {
     async function fetchDetails() {
@@ -85,7 +86,7 @@ function PublicBusinessProfile() {
     if (!user) {
       navigate('/login', { state: { from: location.pathname } });
     } else {
-      setShowModal(true);
+      setShowClaimModal(true);
     }
   }
 
@@ -129,19 +130,32 @@ function PublicBusinessProfile() {
           <button onClick={() => navigate('/')} className="text-lg font-bold text-white focus:outline-none">
             REPUFLOW
           </button>
-          <div className="flex items-center gap-4">
-            {user && hasBusiness && (
-              <button
-                onClick={() => navigate('/customers')}
-                className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
-              >
-                Review Requests
-              </button>
-            )}
-            {!user && (
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => navigate('/search')}
+              className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3 py-2"
+            >
+              Search Businesses
+            </button>
+            {user ? (
+              <>
+                <button
+                  onClick={() => navigate('/businesses')}
+                  className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3 py-2"
+                >
+                  My Businesses
+                </button>
+                <button
+                  onClick={async () => { await supabase.auth.signOut(); }}
+                  className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3 py-2"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
               <button
                 onClick={() => navigate('/login')}
-                className="text-slate-400 hover:text-slate-200 text-sm transition-colors"
+                className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3 py-2"
               >
                 Login
               </button>
@@ -225,59 +239,62 @@ function PublicBusinessProfile() {
         )}
 
         <div className="pt-2">
-          <Button
-            onClick={handleClaimClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-          >
-            Claim this Business
-          </Button>
+          {alreadyClaimed ? (
+            <p className="text-slate-400 text-sm">You have already claimed this business.</p>
+          ) : (
+            <Button
+              onClick={handleClaimClick}
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+            >
+              Claim this Business
+            </Button>
+          )}
         </div>
 
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <Card className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-md">
-            <CardHeader className="px-4 pt-4 pb-2">
-              <CardTitle className="text-slate-100 text-lg font-semibold">Claim this business</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4 flex flex-col gap-4">
-              <p className="text-slate-400 text-sm leading-relaxed">
-                IMPORTANT DISCLAIMER: RepuFlow is a portfolio project built for educational and demonstration purposes only.
-                By claiming this business, you certify that: (1) You are the authorized owner or representative of this business,
-                (2) You will not use this platform to send unsolicited messages or spam,
-                (3) You will not use this platform to manipulate or fabricate reviews,
-                (4) You understand this is a demo application and should not be used for real commercial purposes without proper authorization.
-                Misuse of this platform is strictly prohibited.
-              </p>
-              <Separator className="bg-slate-700" />
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  className="w-4 h-4 rounded accent-blue-500"
-                />
-                <span className="text-slate-300 text-sm">I have read and agree to the above terms</span>
-              </label>
-              {claimError && <p className="text-red-400 text-sm">{claimError}</p>}
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleConfirmClaim}
-                  disabled={!agreed || saving}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-40"
-                >
-                  {saving ? "Saving..." : "Confirm claim"}
-                </Button>
-                <button
-                  onClick={() => { setShowModal(false); setAgreed(false); setClaimError(null); }}
-                  className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3"
-                >
-                  Cancel
-                </button>
-              </div>
-            </CardContent>
-          </Card>
+      {showClaimModal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
+          <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 max-w-lg w-full mx-4 flex flex-col gap-4">
+            <div>
+              <h2 className="text-slate-100 text-lg font-semibold mb-1">Claim this business</h2>
+              <p className="text-blue-400 text-sm font-medium">{placeDetails.displayName.text}</p>
+            </div>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              IMPORTANT DISCLAIMER: RepuFlow is a portfolio project built for educational and demonstration purposes only.
+              By claiming this business, you certify that: (1) You are the authorized owner or representative of this business,
+              (2) You will not use this platform to send unsolicited messages or spam,
+              (3) You will not use this platform to manipulate or fabricate reviews,
+              (4) You understand this is a demo application and should not be used for real commercial purposes without proper authorization.
+              Misuse of this platform is strictly prohibited.
+            </p>
+            <Separator className="bg-slate-700" />
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="w-4 h-4 rounded accent-blue-500"
+              />
+              <span className="text-slate-300 text-sm">I have read and agree to the above terms</span>
+            </label>
+            {claimError && <p className="text-red-400 text-sm">{claimError}</p>}
+            <div className="flex gap-3">
+              <Button
+                onClick={handleConfirmClaim}
+                disabled={!agreed || saving}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-40"
+              >
+                {saving ? "Saving..." : "Confirm Claim"}
+              </Button>
+              <button
+                onClick={() => { setShowClaimModal(false); setAgreed(false); setClaimError(null); }}
+                className="text-slate-400 hover:text-slate-200 text-sm transition-colors px-3"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
