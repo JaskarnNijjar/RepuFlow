@@ -14,10 +14,10 @@ RepuFlow is built for the one-person trades operation that just wants to know wh
 
 ## What It Does
 
-- Business owners sign up and search for their business by name — RepuFlow pulls their Google listing automatically
-- Their existing reviews are displayed on a dashboard with sentiment scoring (positive, neutral, negative)
-- They can add customers and send them a review request via SMS with one tap
-- Negative reviews trigger an alert so the owner can respond before it becomes a bigger issue
+- Anyone can search for a business and view its review profile, sentiment score, and AI summary without an account
+- Business owners claim their Google listing and get a dashboard showing their reviews with sentiment scoring (positive, neutral, negative)
+- Owners can claim multiple businesses under one account and switch between their dashboards
+- From the My Businesses page, owners add customers by name and phone number, import them via CSV, and send personalized SMS review request links with one tap
 
 ---
 
@@ -51,6 +51,9 @@ This project is actively in development. Here's what's working:
 - Dashboard with sentiment-scored review display — the dashboard shows all fetched reviews with sentiment labels and an overall sentiment meter (gradient bar from negative to positive based on average star rating)
 - Public business search and profile — anyone can search for any business and view its review profile without logging in; the profile shows reviews, sentiment meter, and AI summary
 - Business claiming — authenticated users can claim a business listing from the public profile page; includes a disclaimer modal requiring users to certify ownership before proceeding
+- Multi-business support — a single account can claim multiple businesses; the dashboard lets owners switch between them via a dropdown, defaulting to the last viewed business via localStorage
+- My Businesses page — a dedicated management page where owners see all their claimed businesses, expand each to add customers, import via CSV, send SMS review requests, and unclaim a business with inline confirmation
+- Landing page — a public marketing page at the root route introducing RepuFlow to new visitors, with navigation to search, login, and signup
 
 **Known limitations:**
 - Google's Places API returns a maximum of 5 reviews per business. This is a hard limit set by Google and applies to all applications using their official API. For a production version of RepuFlow, a third-party service like Outscraper would be used to fetch the full review history. For the purposes of this demo, 5 reviews are sufficient to demonstrate the sentiment analysis and AI summary functionality.
@@ -120,7 +123,7 @@ The app will be running at `http://localhost:5173` and the API at `http://localh
 
 Three tables in Supabase:
 
-**businesses** — stores each user's business, linked to their auth account via `user_id` and identified on Google via `place_id`
+**businesses** — stores claimed businesses, linked to their owner via `user_id` and identified on Google via `place_id`; a single user can have multiple rows (one per claimed business)
 
 **customers** — stores the contacts each business wants to send review requests to, linked to a business via `business_id`
 
